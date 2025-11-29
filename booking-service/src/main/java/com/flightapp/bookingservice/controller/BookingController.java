@@ -22,7 +22,7 @@ import com.flightapp.bookingservice.feign.FlightClient;
 import com.flightapp.bookingservice.repository.BookingRepository;
 
 @RestController
-@RequestMapping("/api/v1.0/flight/booking")
+@RequestMapping("/api/flight/booking")
 public class BookingController {
 
 	private final BookingRepository repo;
