@@ -16,13 +16,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.flightapp.bookingservice.domain.Booking;
 import com.flightapp.bookingservice.dto.BookingRequest;
+import com.flightapp.bookingservice.feign.FlightClient;
 import com.flightapp.bookingservice.service.BookingService;
 
 @WebMvcTest(BookingController.class)
+@ActiveProfiles("test")
 public class BookingControllerTest {
 
     @Autowired
@@ -32,6 +35,9 @@ public class BookingControllerTest {
     BookingService service;
 
     BookingRequest req;
+    
+    @MockBean
+    private FlightClient flightClient;
 
     @BeforeEach
     void init() {
