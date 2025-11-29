@@ -10,6 +10,8 @@ import com.flightapp.bookingservice.dto.BookingRequest;
 import com.flightapp.bookingservice.dto.TicketResponse;
 import com.flightapp.bookingservice.service.BookingService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/flight/booking")
 public class BookingController {
