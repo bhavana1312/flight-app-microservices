@@ -23,4 +23,26 @@ public class FlightController{
         List<Flight> list=repo.findByFromPlaceAndToPlace(from,to);
         return ResponseEntity.ok(list);
     }
+    
+    @GetMapping("/get/{id}")
+    public ResponseEntity<Flight> getFlight(@PathVariable Long id){
+        return repo.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/update-seats/{flightId}/{count}")
+    public ResponseEntity<String> updateSeats(@PathVariable Long flightId,@PathVariable Integer count){
+        Flight f = repo.findById(flightId).orElse(null);
+        if(f==null) return ResponseEntity.notFound().build();
+
+        if(f.getAvailableSeats() < count) {
+            return ResponseEntity.badRequest().body("Not Enough Seats");
+        }
+
+        f.setAvailableSeats(f.getAvailableSeats() - count);
+        repo.save(f);
+        return ResponseEntity.ok("Seats Updated");
+    }
+
 }
