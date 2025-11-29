@@ -98,7 +98,7 @@ class FlightServiceImplTest {
         when(repo.findById(2L)).thenReturn(Optional.of(f));
 
         String res = service.rollbackSeats(2L, 3);
-        assertEquals("Rollback Successful", res);
+        assertEquals("Seats Rolled Back", res);
         assertEquals(8, f.getAvailableSeats());
     }
 

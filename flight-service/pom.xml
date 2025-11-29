@@ -14,9 +14,9 @@
     </parent>
 
     <groupId>com.flightapp</groupId>
-    <artifactId>booking-service</artifactId>
+    <artifactId>flight-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>booking-service</name>
+    <name>flight-service</name>
 
     <properties>
         <java.version>17</java.version>
