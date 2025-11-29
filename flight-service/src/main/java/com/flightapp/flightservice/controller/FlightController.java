@@ -1,8 +1,11 @@
 package com.flightapp.flightservice.controller;
 
 import com.flightapp.flightservice.domain.Flight;
+import com.flightapp.flightservice.dto.FlightInventoryRequest;
+import com.flightapp.flightservice.dto.FlightSearchRequest;
 import com.flightapp.flightservice.service.FlightService;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,13 +22,23 @@ public class FlightController {
     }
 
     @PostMapping("/airline/inventory/add")
-    public ResponseEntity<?> addInventory(@RequestBody Flight flight) {
+    public ResponseEntity<?> addInventory(@Valid @RequestBody FlightInventoryRequest req) {
+        Flight flight = new Flight();
+        flight.setAirlineName(req.getAirlineName());
+        flight.setAirlineCode(req.getAirlineCode());
+        flight.setFromPlace(req.getFromPlace());
+        flight.setToPlace(req.getToPlace());
+        flight.setDepartureDateTime(req.getDepartureDateTime());
+        flight.setArrivalDateTime(req.getArrivalDateTime());
+        flight.setPrice(req.getPrice());
+        flight.setAvailableSeats(req.getAvailableSeats());
+
         return ResponseEntity.ok(service.addInventory(flight));
     }
 
     @PostMapping("/search")
-    public ResponseEntity<List<Flight>> search(@RequestParam String from, @RequestParam String to) {
-        return ResponseEntity.ok(service.search(from, to));
+    public ResponseEntity<List<Flight>> search(@Valid @RequestBody FlightSearchRequest req) {
+        return ResponseEntity.ok(service.search(req.getFrom(), req.getTo()));
     }
 
     @GetMapping("/get/{id}")

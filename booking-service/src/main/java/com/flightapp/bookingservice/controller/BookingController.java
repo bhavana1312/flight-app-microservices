@@ -21,7 +21,7 @@ public class BookingController {
     }
 
     @PostMapping("/{flightId}")
-    public ResponseEntity<?> book(@PathVariable Long flightId, @RequestBody BookingRequest req) {
+    public ResponseEntity<?> book(@PathVariable Long flightId, @Valid @RequestBody BookingRequest req) {
         try {
             return ResponseEntity.ok(service.bookTicket(flightId, req));
         } catch (Exception e) {
