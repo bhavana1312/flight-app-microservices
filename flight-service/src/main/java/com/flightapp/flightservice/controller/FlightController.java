@@ -64,4 +64,17 @@ public class FlightController {
 
         return ResponseEntity.ok(response);
     }
+    
+    @PutMapping("/rollback-seats/{flightId}/{count}")
+    public ResponseEntity<?> rollbackSeats(@PathVariable Long flightId, @PathVariable Integer count) {
+
+        String response = service.rollbackSeats(flightId, count);
+
+        if ("Flight Not Found".equals(response)) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
 }

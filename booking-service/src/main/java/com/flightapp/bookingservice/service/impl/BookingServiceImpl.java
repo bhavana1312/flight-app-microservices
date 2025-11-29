@@ -93,12 +93,12 @@ public class BookingServiceImpl implements BookingService {
 			throw new RuntimeException("PNR Not Found");
 		}
 
+		if (!b.getStatus().equals("BOOKED")) {
+			throw new RuntimeException("Only booked tickets can be cancelled");
+		}
+
 		if (b.getJourneyDate() == null) {
 			throw new RuntimeException("Journey date not set");
-		}
-		
-		if (!b.getStatus().equals("BOOKED")) {
-		    throw new RuntimeException("Only booked tickets can be cancelled");
 		}
 
 		LocalDateTime now = LocalDateTime.now();
@@ -111,6 +111,11 @@ public class BookingServiceImpl implements BookingService {
 
 		b.setStatus("CANCELLED");
 		repo.save(b);
+
+		String response = flightClient.rollbackSeats(b.getFlightId(), b.getSeats());
+		if (!"Seats Rolled Back".equals(response)) {
+			System.out.println("WARNING: Seat rollback failed: " + response);
+		}
 
 		return "Cancelled: " + pnr;
 	}

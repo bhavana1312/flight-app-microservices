@@ -11,4 +11,8 @@ public interface FlightClient {
 
 	@GetMapping("/api/flight/get/{flightId}")
 	Object getFlight(@PathVariable("flightId") Long flightId);
+	
+	@PutMapping("/api/flight/rollback-seats/{flightId}/{count}")
+	String rollbackSeats(@PathVariable("flightId") Long flightId,
+	                     @PathVariable("count") Integer count);
 }
