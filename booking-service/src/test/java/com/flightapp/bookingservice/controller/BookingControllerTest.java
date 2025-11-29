@@ -1,102 +1,125 @@
 package com.flightapp.bookingservice.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.flightapp.bookingservice.dto.BookingRequest;
+import com.flightapp.bookingservice.dto.TicketResponse;
+import com.flightapp.bookingservice.domain.Booking;
+import com.flightapp.bookingservice.service.BookingService;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.flightapp.bookingservice.domain.Booking;
-import com.flightapp.bookingservice.dto.BookingRequest;
-import com.flightapp.bookingservice.feign.FlightClient;
-import com.flightapp.bookingservice.service.BookingService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(BookingController.class)
+import java.util.List;
+
 @ActiveProfiles("test")
-public class BookingControllerTest {
+@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
+@WebMvcTest(BookingController.class)
+class BookingControllerTest {
 
     @Autowired
-    MockMvc mvc;
+    private MockMvc mockMvc;
 
     @MockBean
-    BookingService service;
+    private BookingService service;
 
-    BookingRequest req;
-    
-    @MockBean
-    private FlightClient flightClient;
-
-    @BeforeEach
-    void init() {
-        req = new BookingRequest(
-            "test@gmail.com",
-            1,
-            "John:M:25",
-            2000.0,
-            LocalDate.now().plusDays(3)
-        );
-    }
+    @Autowired
+    private ObjectMapper mapper;
 
     @Test
     void testBookSuccess() throws Exception {
-        when(service.bookTicket(eq(1L), any())).thenReturn(new Booking());
+        Booking b = new Booking();
+        b.setPnr("PNR-123");
 
-        mvc.perform(post("/api/flight/booking/1")
-                .contentType("application/json")
-                .content("""
-                        {
-                            "email":"test@gmail.com",
-                            "seats":1,
-                            "passengerDetails":"John:M:25",
-                            "amount":2000,
-                            "journeyDate":"2030-01-01"
-                        }
-                        """))
-                .andExpect(status().isOk());
+        when(service.bookTicket(eq(1L), any())).thenReturn(b);
+
+        BookingRequest req = new BookingRequest("a@gmail.com", 1, "John:M:22", 1000.0, java.time.LocalDate.now().plusDays(2));
+
+        mockMvc.perform(post("/api/flight/booking/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(req)))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("PNR")));
     }
 
     @Test
-    void testHistory() throws Exception {
-        when(service.getHistory("a@mail.com")).thenReturn(new ArrayList<>());
+    void testBookFailure() throws Exception {
+        when(service.bookTicket(eq(1L), any())).thenThrow(new RuntimeException("Error"));
 
-        mvc.perform(get("/api/flight/booking/history/a@mail.com"))
-                .andExpect(status().isOk());
+        BookingRequest req = new BookingRequest("a@gmail.com", 1, "John:M:22", 1000.0, java.time.LocalDate.now().plusDays(2));
+
+        mockMvc.perform(post("/api/flight/booking/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void testGetTicket() throws Exception {
-        when(service.getTicketJson("PNR123")).thenReturn("{}");
-
-        mvc.perform(get("/api/flight/booking/ticket/PNR123"))
-                .andExpect(status().isOk());
+    void testBookValidation_failure_missingFields() throws Exception {
+        mockMvc.perform(post("/api/flight/booking/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void testCancel() throws Exception {
-        when(service.cancelBooking("PNR123")).thenReturn("Cancelled");
-
-        mvc.perform(delete("/api/flight/booking/cancel/PNR123"))
-                .andExpect(status().isOk());
+    void testHistory_nonEmptyResponseBody() throws Exception {
+        Booking b = new Booking(); b.setPnr("P-H1"); b.setEmail("a@mail.com");
+        when(service.getHistory("a@mail.com")).thenReturn(List.of(b));
+        mockMvc.perform(get("/api/flight/booking/history/a@mail.com"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].pnr").value("P-H1"));
     }
 
     @Test
-    void testDownload() throws Exception {
-        when(service.downloadTicket("PNR123")).thenReturn(null);
+    void testGetTicket_andFailure() throws Exception {
+        when(service.getTicketJson("PNR-1")).thenReturn("ticket-json");
+        mockMvc.perform(get("/api/flight/booking/ticket/PNR-1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("ticket-json")));
 
-        mvc.perform(get("/api/flight/booking/download/PNR123"))
+        when(service.getTicketJson("BAD")).thenThrow(new RuntimeException("Not Found"));
+        mockMvc.perform(get("/api/flight/booking/ticket/BAD"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testCancel_andFailure() throws Exception {
+        when(service.cancelBooking("PNR-1")).thenReturn("Cancelled");
+        mockMvc.perform(delete("/api/flight/booking/cancel/PNR-1"))
                 .andExpect(status().isOk());
+
+        when(service.cancelBooking("BAD")).thenThrow(new RuntimeException("Error"));
+        mockMvc.perform(delete("/api/flight/booking/cancel/BAD"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void testDownload_returnsJsonStructure_andFailure() throws Exception {
+        TicketResponse resp = new TicketResponse();
+        resp.setPnr("D1");
+        resp.setEmail("a@mail.com");
+        resp.setPassengerDetails("John:M:25");
+        when(service.downloadTicket("D1")).thenReturn(resp);
+
+        mockMvc.perform(get("/api/flight/booking/download/D1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pnr").value("D1"))
+                .andExpect(jsonPath("$.email").value("a@mail.com"));
+
+        when(service.downloadTicket("BAD")).thenThrow(new RuntimeException("Error"));
+        mockMvc.perform(get("/api/flight/booking/download/BAD"))
+                .andExpect(status().isBadRequest());
     }
 }
