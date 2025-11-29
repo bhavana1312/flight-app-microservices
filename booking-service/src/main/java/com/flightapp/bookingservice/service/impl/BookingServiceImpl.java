@@ -8,6 +8,9 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+
 import com.flightapp.bookingservice.domain.Booking;
 import com.flightapp.bookingservice.dto.BookingRequest;
 import com.flightapp.bookingservice.dto.TicketResponse;
@@ -26,6 +29,35 @@ public class BookingServiceImpl implements BookingService {
 		this.flightClient = flightClient;
 	}
 
+	@CircuitBreaker(name = "flightService", fallbackMethod = "flightFallback")
+	public Object safeGetFlight(Long flightId) {
+		return flightClient.getFlight(flightId);
+	}
+
+	@CircuitBreaker(name = "flightService", fallbackMethod = "seatUpdateFallback")
+	@Retry(name = "flightRetry")
+	public String safeUpdateSeats(Long flightId, Integer seats) {
+		return flightClient.updateSeats(flightId, seats);
+	}
+
+	@CircuitBreaker(name = "flightService", fallbackMethod = "rollbackFallback")
+	@Retry(name = "flightRetry")
+	public String safeRollbackSeats(Long flightId, Integer seats) {
+		return flightClient.rollbackSeats(flightId, seats);
+	}
+
+	public Object flightFallback(Long flightId, Throwable t) {
+		return null;
+	}
+
+	public String seatUpdateFallback(Long flightId, Integer seats, Throwable t) {
+		return "Flight Service Down - Cannot Update Seats";
+	}
+
+	public String rollbackFallback(Long flightId, Integer seats, Throwable t) {
+		return "Flight Service Down - Rollback Pending";
+	}
+
 	@Override
 	public Booking bookTicket(Long flightId, BookingRequest req) {
 
@@ -42,15 +74,13 @@ public class BookingServiceImpl implements BookingService {
 			}
 		}
 
-		Object flight = flightClient.getFlight(flightId);
-		if (flight == null) {
-			throw new RuntimeException("Invalid Flight ID");
-		}
+		Object flight = safeGetFlight(flightId);
+		if (flight == null)
+			throw new RuntimeException("Flight service unavailable. Try later.");
 
-		String seatUpdateStatus = flightClient.updateSeats(flightId, req.getSeats());
-		if (!"Seats Updated".equals(seatUpdateStatus)) {
+		String seatUpdateStatus = safeUpdateSeats(flightId, req.getSeats());
+		if (!"Seats Updated".equals(seatUpdateStatus))
 			throw new RuntimeException(seatUpdateStatus);
-		}
 
 		Booking booking = new Booking();
 		booking.setEmail(req.getEmail());
@@ -58,7 +88,6 @@ public class BookingServiceImpl implements BookingService {
 		booking.setPassengerDetails(req.getPassengerDetails());
 		booking.setAmount(req.getAmount());
 		booking.setJourneyDate(req.getJourneyDate());
-
 		booking.setPnr("PNR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
 		booking.setFlightId(flightId);
 		booking.setBookedAt(LocalDateTime.now());
@@ -112,10 +141,8 @@ public class BookingServiceImpl implements BookingService {
 		b.setStatus("CANCELLED");
 		repo.save(b);
 
-		String response = flightClient.rollbackSeats(b.getFlightId(), b.getSeats());
-		if (!"Seats Rolled Back".equals(response)) {
-			System.out.println("WARNING: Seat rollback failed: " + response);
-		}
+		String rollbackResponse = safeRollbackSeats(b.getFlightId(), b.getSeats());
+		System.out.println("Rollback response: " + rollbackResponse);
 
 		return "Cancelled: " + pnr;
 	}
@@ -127,7 +154,7 @@ public class BookingServiceImpl implements BookingService {
 		if (b == null)
 			throw new RuntimeException("PNR not found");
 
-		Object flightDetails = flightClient.getFlight(b.getFlightId());
+		Object flightDetails = safeGetFlight(b.getFlightId());
 
 		TicketResponse resp = new TicketResponse();
 		resp.setPnr(b.getPnr());

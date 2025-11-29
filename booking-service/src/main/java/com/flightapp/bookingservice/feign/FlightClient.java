@@ -6,13 +6,12 @@ import org.springframework.web.bind.annotation.*;
 @FeignClient(name = "flight-service")
 public interface FlightClient {
 
-	@PutMapping("/api/flight/update-seats/{flightId}/{count}")
-	String updateSeats(@PathVariable("flightId") Long flightId, @PathVariable("count") Integer count);
+    @GetMapping("/api/flight/get/{id}")
+    Object getFlight(@PathVariable("id") Long id);
 
-	@GetMapping("/api/flight/get/{flightId}")
-	Object getFlight(@PathVariable("flightId") Long flightId);
-	
-	@PutMapping("/api/flight/rollback-seats/{flightId}/{count}")
-	String rollbackSeats(@PathVariable("flightId") Long flightId,
-	                     @PathVariable("count") Integer count);
+    @PutMapping("/api/flight/update-seats/{flightId}/{count}")
+    String updateSeats(@PathVariable("flightId") Long flightId, @PathVariable("count") Integer count);
+
+    @PutMapping("/api/flight/rollback-seats/{flightId}/{count}")
+    String rollbackSeats(@PathVariable("flightId") Long flightId, @PathVariable("count") Integer count);
 }
