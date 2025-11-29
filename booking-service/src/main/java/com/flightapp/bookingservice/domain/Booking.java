@@ -3,6 +3,7 @@ package com.flightapp.bookingservice.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,9 +21,10 @@ public class Booking{
     private String email;
     private String passengerDetails; 
     private Integer seats;
-    private String flightId; 
+    private Long flightId; 
     private LocalDateTime bookedAt;
     private String status; 
     private Double amount;
     private String ticketJson; 
+    private LocalDate journeyDate;
 }

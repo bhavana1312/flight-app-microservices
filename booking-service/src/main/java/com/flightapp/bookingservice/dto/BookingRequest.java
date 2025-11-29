@@ -2,6 +2,7 @@ package com.flightapp.bookingservice.dto;
 
 import lombok.*;
 import jakarta.validation.constraints.*;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -13,6 +14,7 @@ public class BookingRequest {
     private String email;
 
     @NotNull
+    @Min(1)
     private Integer seats;
 
     @NotBlank
@@ -20,4 +22,7 @@ public class BookingRequest {
 
     @NotNull
     private Double amount;
+
+    @NotNull
+    private LocalDate journeyDate;
 }
