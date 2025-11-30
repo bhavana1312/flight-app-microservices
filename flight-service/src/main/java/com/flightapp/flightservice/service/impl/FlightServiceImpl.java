@@ -13,96 +13,53 @@ import com.flightapp.flightservice.service.FlightService;
 @Service
 public class FlightServiceImpl implements FlightService {
 
-    private final FlightRepository repo;
+	private final FlightRepository repo;
 
-    public FlightServiceImpl(FlightRepository repo) {
-        this.repo = repo;
-    }
+	public FlightServiceImpl(FlightRepository repo) {
+		this.repo = repo;
+	}
 
-    @Override
-    public Flight addInventory(Flight flight) {
-        return repo.save(flight);
-    }
+	@Override
+	public Flight addInventory(Flight flight) {
+		return repo.save(flight);
+	}
 
-    @Override
-    public List<Flight> search(String from, String to) {
-        return repo.findByFromPlaceAndToPlace(from, to);
-    }
+	@Override
+	public List<Flight> search(String from, String to) {
+		return repo.findByFromPlaceAndToPlace(from, to);
+	}
 
-    @Override
-    public Flight getFlight(Long id) {
-        return repo.findById(id).orElse(null);
-    }
+	@Override
+	public Flight getFlight(Long id) {
+		return repo.findById(id).orElse(null);
+	}
 
+	@Override
+	public String updateSeats(Long flightId, Integer count) {
+		Flight f = repo.findById(flightId).orElse(null);
+		if (f == null) {
+			return "Flight Not Found";
+		}
 
-    @Override
-    public String updateSeats(Long flightId, Integer count) {
-        return "SEAT_COUNT_UPDATE_NOT_SUPPORTED";
-    }
+		if (f.getAvailableSeats() < count) {
+			return "Not Enough Seats";
+		}
 
-    @Override
-    public String rollbackSeats(Long flightId, Integer count) {
-        return "ROLLBACK_NOT_SUPPORTED_FOR_COUNT";
-    }
+		f.setAvailableSeats(f.getAvailableSeats() - count);
+		repo.save(f);
 
+		return "Seats Updated";
+	}
 
-    @Override
-    @Transactional
-    public String bookSeats(Long flightId, List<String> seatsToBook) {
+	@Override
+	public String rollbackSeats(Long flightId, Integer count) {
+		Flight f = repo.findById(flightId).orElse(null);
+		if (f == null)
+			return "Flight Not Found";
 
-        Flight flight = repo.findById(flightId).orElse(null);
-        if (flight == null) {
-            return "FLIGHT_NOT_FOUND";
-        }
+		f.setAvailableSeats(f.getAvailableSeats() + count);
+		repo.save(f);
 
-        for (String seatNum : seatsToBook) {
-            Seat seat = flight.getSeats()
-                    .stream()
-                    .filter(s -> s.getSeatNumber().equalsIgnoreCase(seatNum))
-                    .findFirst()
-                    .orElse(null);
-
-            if (seat == null) return "SEAT_NOT_FOUND";
-            if (seat.isBooked()) return "SEAT_ALREADY_BOOKED";
-        }
-
-        for (String seatNum : seatsToBook) {
-            Seat seat = flight.getSeats()
-                    .stream()
-                    .filter(s -> s.getSeatNumber().equalsIgnoreCase(seatNum))
-                    .findFirst()
-                    .orElseThrow();
-
-            seat.setBooked(true);
-        }
-
-        repo.save(flight);
-        return "BOOKING_SUCCESS";
-    }
-
-    @Override
-    @Transactional
-    public String rollbackSeatBooking(Long flightId, List<String> seatsToRelease) {
-
-        Flight flight = repo.findById(flightId).orElse(null);
-        if (flight == null) {
-            return "FLIGHT_NOT_FOUND";
-        }
-
-        for (String seatNum : seatsToRelease) {
-            Seat seat = flight.getSeats()
-                    .stream()
-                    .filter(s -> s.getSeatNumber().equalsIgnoreCase(seatNum))
-                    .findFirst()
-                    .orElse(null);
-
-            if (seat == null) return "SEAT_NOT_FOUND";
-            if (!seat.isBooked()) return "SEAT_ALREADY_FREE";
-
-            seat.setBooked(false);
-        }
-
-        repo.save(flight);
-        return "ROLLBACK_SUCCESS";
-    }
+		return "Seats Rolled Back";
+	}
 }

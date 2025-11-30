@@ -1,50 +1,38 @@
 package com.flightapp.flightservice.domain;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import jakarta.persistence.*;
-import lombok.*;
 @Entity
-@Table(name="flights")
+@Table(name = "flights")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Flight {
 
-    @Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @Column(nullable=false)
-    private String airlineName;
+	private String airlineName;
 
-    @Column(nullable=false, length=10)
-    private String airlineCode;
+	private String airlineCode;
 
-    @Column(nullable=false, length=3)
-    private String fromPlace;
+	private String fromPlace;
 
-    @Column(nullable=false, length=3)
-    private String toPlace;
+	private String toPlace;
+	private String departureDateTime;
+	private String arrivalDateTime;
 
-    @Column(nullable=false)
-    private LocalDateTime departureDateTime;
+	private Double price;
+	private Integer availableSeats;
 
-    @Column(nullable=false)
-    private LocalDateTime arrivalDateTime;
-
-    @Column(nullable=false)
-    private Double price;
-
-    @Column(nullable=false)
-    private Integer totalSeats;
-
-    @OneToMany(mappedBy="flight", cascade=CascadeType.ALL, orphanRemoval=true, fetch=FetchType.EAGER)
-    private List<Seat> seats;
-    
-    public Integer getAvailableSeats() {
-        return (int) seats.stream().filter(seat -> !seat.isBooked()).count();
-    }
 }

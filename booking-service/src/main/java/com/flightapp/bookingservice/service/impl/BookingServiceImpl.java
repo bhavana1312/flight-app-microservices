@@ -63,37 +63,45 @@ public class BookingServiceImpl implements BookingService {
 	@Override
 	public Booking bookTicket(Long flightId, BookingRequest req) {
 
-		FlightResponse flight = flightClient.getFlight(flightId);
+		String[] passengers = req.getPassengerDetails().split(";");
+		if (passengers.length != req.getSeats()) {
+			throw new RuntimeException("Number of passengers must match number of seats booked");
+		}
+
+		for (String p : passengers) {
+			String[] parts = p.split(":");
+			int age = Integer.parseInt(parts[2]);
+			if (age <= 0 || age > 120) {
+				throw new RuntimeException("Invalid age for passenger: " + p);
+			}
+		}
+
+		Object flight = safeGetFlight(flightId);
 		if (flight == null)
-			throw new RuntimeException("Flight service unavailable");
+			throw new RuntimeException("Flight service unavailable. Try later.");
 
-		for (String seatNum : req.getSelectedSeats()) {
-			SeatResponse seat = flight.getSeats().stream().filter(s -> s.getSeatNumber().equals(seatNum)).findFirst()
-					.orElse(null);
+		String seatUpdateStatus = safeUpdateSeats(flightId, req.getSeats());
+		if (!"Seats Updated".equals(seatUpdateStatus))
+			throw new RuntimeException(seatUpdateStatus);
 
-			if (seat == null)
-				throw new RuntimeException("Seat not found: " + seatNum);
-			if (seat.isBooked())
-				throw new RuntimeException("Seat already booked: " + seatNum);
-		}
+		Booking booking = new Booking();
+		booking.setEmail(req.getEmail());
+		booking.setSeats(req.getSeats());
+		booking.setPassengerDetails(req.getPassengerDetails());
+		booking.setAmount(req.getAmount());
+		booking.setJourneyDate(req.getJourneyDate());
+		booking.setPnr("PNR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+		booking.setFlightId(flightId);
+		booking.setBookedAt(LocalDateTime.now());
+		booking.setStatus("BOOKED");
 
-		String update = flightClient.bookSeats(flightId, req.getSelectedSeats());
-		if (!"BOOKING_SUCCESS".equals(update)) {
-			throw new RuntimeException(update);
-		}
+		String ticketJson = String.format(
+				"{\"pnr\":\"%s\",\"flightId\":%d,\"journeyDate\":\"%s\",\"passengers\":\"%s\"}", booking.getPnr(),
+				flightId, req.getJourneyDate().toString(), req.getPassengerDetails());
 
-		Booking b = new Booking();
-		b.setEmail(req.getEmail());
-		b.setSeats(req.getSelectedSeats().size());
-		b.setPassengerDetails(req.getPassengerDetails());
-		b.setAmount(req.getAmount());
-		b.setJourneyDate(req.getJourneyDate());
-		b.setPnr("PNR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-		b.setFlightId(flightId);
-		b.setBookedAt(LocalDateTime.now());
-		b.setStatus("BOOKED");
+		booking.setTicketJson(ticketJson);
 
-		return repo.save(b);
+		return repo.save(booking);
 	}
 
 	@Override
