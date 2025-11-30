@@ -5,7 +5,6 @@ import java.util.List;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 @Entity
 @Table(name="flights")
 @Getter
@@ -24,10 +23,10 @@ public class Flight {
     @Column(nullable=false, length=10)
     private String airlineCode;
 
-    @Column(nullable=false, length=5)
+    @Column(nullable=false, length=3)
     private String fromPlace;
 
-    @Column(nullable=false, length=5)
+    @Column(nullable=false, length=3)
     private String toPlace;
 
     @Column(nullable=false)
@@ -44,4 +43,8 @@ public class Flight {
 
     @OneToMany(mappedBy="flight", cascade=CascadeType.ALL, orphanRemoval=true, fetch=FetchType.EAGER)
     private List<Seat> seats;
+    
+    public Integer getAvailableSeats() {
+        return (int) seats.stream().filter(seat -> !seat.isBooked()).count();
+    }
 }

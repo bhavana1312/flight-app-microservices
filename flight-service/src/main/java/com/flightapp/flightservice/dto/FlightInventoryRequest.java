@@ -1,39 +1,46 @@
 package com.flightapp.flightservice.dto;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import com.flightapp.flightservice.domain.SeatType;
+
 import jakarta.validation.constraints.*;
 
 import lombok.*;
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class FlightInventoryRequest {
 
-    @NotBlank(message = "Airline name is required")
+    @NotBlank
     private String airlineName;
 
-    @NotBlank(message = "Airline code is required")
-    @Size(min = 2, max = 10, message = "Airline code must be between 2 and 10 characters")
+    @Pattern(regexp = "^[A-Z0-9]{2,3}$", message = "Invalid airline code")
     private String airlineCode;
 
-    @NotBlank(message = "From place is required")
+    @Pattern(regexp = "^[A-Z]{3}$", message = "From place must be 3-letter IATA code")
     private String fromPlace;
 
-    @NotBlank(message = "To place is required")
+    @Pattern(regexp = "^[A-Z]{3}$", message = "To place must be 3-letter IATA code")
     private String toPlace;
 
-    @NotBlank(message = "Departure date/time is required")
-    private String departureDateTime;
+    @NotNull
+    private LocalDateTime departureDateTime;
 
-    @NotBlank(message = "Arrival date/time is required")
-    private String arrivalDateTime;
+    @NotNull
+    private LocalDateTime arrivalDateTime;
 
-    @NotNull(message = "Price is required")
-    @Positive(message = "Price must be greater than zero")
+    @DecimalMin(value="500.00", message="Minimum price is ₹500")
     private Double price;
 
-    @NotNull(message = "Available seats are required")
-    @Positive(message = "Available seats must be greater than zero")
-    private Integer availableSeats;
+    @Min(value=10, message="Minimum 10 seats required")
+    private Integer totalSeats;
+
+    @NotEmpty(message="Seat numbers required")
+    private List<String> seatNumbers;
+
+    @NotEmpty(message="Seat types required for each seat")
+    private List<SeatType> seatTypes;
 }
