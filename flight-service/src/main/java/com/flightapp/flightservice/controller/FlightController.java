@@ -113,5 +113,20 @@ public class FlightController {
 			return ResponseEntity.notFound().build();
 		return ResponseEntity.ok(flight.getSeats());
 	}
+	
+	@PostMapping("/book-seats/{flightId}")
+	public ResponseEntity<?> bookSeats(
+	        @PathVariable Long flightId,
+	        @RequestBody List<String> seatsToBook) {
+
+	    String result = service.bookSeats(flightId, seatsToBook);
+
+	    return switch (result) {
+	        case "FLIGHT_NOT_FOUND" -> ResponseEntity.notFound().build();
+	        case "SEAT_NOT_FOUND", "SEAT_ALREADY_BOOKED" -> ResponseEntity.badRequest().body(result);
+	        default -> ResponseEntity.ok("BOOKING_SUCCESS");
+	    };
+	}
+
 
 }

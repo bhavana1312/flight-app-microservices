@@ -1,17 +1,25 @@
 package com.flightapp.bookingservice.feign;
 
+import java.util.List;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+
+import com.flightapp.bookingservice.dto.FlightResponse;
 
 @FeignClient(name = "flight-service")
 public interface FlightClient {
 
-    @GetMapping("/api/flight/get/{id}")
-    Object getFlight(@PathVariable("id") Long id);
+	@GetMapping("/api/flight/get/{id}")
+	FlightResponse getFlight(@PathVariable Long id);
 
     @PutMapping("/api/flight/update-seats/{flightId}/{count}")
     String updateSeats(@PathVariable("flightId") Long flightId, @PathVariable("count") Integer count);
 
     @PutMapping("/api/flight/rollback-seats/{flightId}/{count}")
     String rollbackSeats(@PathVariable("flightId") Long flightId, @PathVariable("count") Integer count);
+    
+    @PostMapping("/api/flight/book-seats/{flightId}")
+    String bookSeats(@PathVariable Long flightId, @RequestBody List<String> seats);
+
 }

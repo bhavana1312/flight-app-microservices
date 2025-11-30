@@ -15,4 +15,8 @@ public interface FlightService {
     String updateSeats(Long flightId, Integer count);
 
 	String rollbackSeats(Long flightId, Integer count);
+
+	String bookSeats(Long flightId, List<String> seats);
+
+	String rollbackSeatBooking(Long flightId, List<String> seatsToRelease);
 }

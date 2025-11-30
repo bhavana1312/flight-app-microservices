@@ -13,6 +13,8 @@ import io.github.resilience4j.retry.annotation.Retry;
 
 import com.flightapp.bookingservice.domain.Booking;
 import com.flightapp.bookingservice.dto.BookingRequest;
+import com.flightapp.bookingservice.dto.FlightResponse;
+import com.flightapp.bookingservice.dto.SeatResponse;
 import com.flightapp.bookingservice.dto.TicketResponse;
 import com.flightapp.bookingservice.feign.FlightClient;
 import com.flightapp.bookingservice.repository.BookingRepository;
@@ -61,46 +63,37 @@ public class BookingServiceImpl implements BookingService {
 	@Override
 	public Booking bookTicket(Long flightId, BookingRequest req) {
 
-		String[] passengers = req.getPassengerDetails().split(";");
-		if (passengers.length != req.getSeats()) {
-			throw new RuntimeException("Number of passengers must match number of seats booked");
-		}
+	    FlightResponse flight = flightClient.getFlight(flightId);
+	    if (flight == null) throw new RuntimeException("Flight service unavailable");
 
-		for (String p : passengers) {
-			String[] parts = p.split(":");
-			int age = Integer.parseInt(parts[2]);
-			if (age <= 0 || age > 120) {
-				throw new RuntimeException("Invalid age for passenger: " + p);
-			}
-		}
+	    for (String s : req.getSelectedSeats()) {
+	        SeatResponse seat = flight.getSeats()
+	                .stream()
+	                .filter(x -> x.getSeatNumber().equals(s))
+	                .findFirst()
+	                .orElse(null);
 
-		Object flight = safeGetFlight(flightId);
-		if (flight == null)
-			throw new RuntimeException("Flight service unavailable. Try later.");
+	        if (seat == null) throw new RuntimeException("Seat not found: " + s);
+	        if (seat.isBooked()) throw new RuntimeException("Seat already booked: " + s);
+	    }
 
-		String seatUpdateStatus = safeUpdateSeats(flightId, req.getSeats());
-		if (!"Seats Updated".equals(seatUpdateStatus))
-			throw new RuntimeException(seatUpdateStatus);
+	    String update = flightClient.bookSeats(flightId, req.getSelectedSeats());
+	    if (!"BOOKING_SUCCESS".equals(update)) throw new RuntimeException(update);
 
-		Booking booking = new Booking();
-		booking.setEmail(req.getEmail());
-		booking.setSeats(req.getSeats());
-		booking.setPassengerDetails(req.getPassengerDetails());
-		booking.setAmount(req.getAmount());
-		booking.setJourneyDate(req.getJourneyDate());
-		booking.setPnr("PNR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-		booking.setFlightId(flightId);
-		booking.setBookedAt(LocalDateTime.now());
-		booking.setStatus("BOOKED");
+	    Booking b = new Booking();
+	    b.setEmail(req.getEmail());
+	    b.setSeats(req.getSelectedSeats().size());
+	    b.setPassengerDetails(req.getPassengerDetails());
+	    b.setAmount(req.getAmount());
+	    b.setJourneyDate(req.getJourneyDate());
+	    b.setPnr("PNR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+	    b.setFlightId(flightId);
+	    b.setBookedAt(LocalDateTime.now());
+	    b.setStatus("BOOKED");
 
-		String ticketJson = String.format(
-				"{\"pnr\":\"%s\",\"flightId\":%d,\"journeyDate\":\"%s\",\"passengers\":\"%s\"}", booking.getPnr(),
-				flightId, req.getJourneyDate().toString(), req.getPassengerDetails());
-
-		booking.setTicketJson(ticketJson);
-
-		return repo.save(booking);
+	    return repo.save(b);
 	}
+
 
 	@Override
 	public List<Booking> getHistory(String email) {
