@@ -9,9 +9,14 @@ import com.flightapp.bookingservice.dto.FlightResponse;
 
 @FeignClient(name = "flight-service")
 public interface FlightClient {
-
+	
 	@GetMapping("/api/flight/get/{id}")
-	FlightResponse getFlight(@PathVariable Long id);
+    FlightResponse getFlight(@PathVariable("id") Long id);
+
+    @PostMapping("/api/flight/book-seats/{id}")
+    String bookSeats(@PathVariable("id") Long id,
+                     @RequestBody List<String> seats);
+
 
     @PutMapping("/api/flight/update-seats/{flightId}/{count}")
     String updateSeats(@PathVariable("flightId") Long flightId, @PathVariable("count") Integer count);
@@ -19,7 +24,6 @@ public interface FlightClient {
     @PutMapping("/api/flight/rollback-seats/{flightId}/{count}")
     String rollbackSeats(@PathVariable("flightId") Long flightId, @PathVariable("count") Integer count);
     
-    @PostMapping("/api/flight/book-seats/{flightId}")
-    String bookSeats(@PathVariable Long flightId, @RequestBody List<String> seats);
+
 
 }

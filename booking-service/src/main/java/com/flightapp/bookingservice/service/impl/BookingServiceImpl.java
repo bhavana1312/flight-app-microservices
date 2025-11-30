@@ -63,37 +63,38 @@ public class BookingServiceImpl implements BookingService {
 	@Override
 	public Booking bookTicket(Long flightId, BookingRequest req) {
 
-	    FlightResponse flight = flightClient.getFlight(flightId);
-	    if (flight == null) throw new RuntimeException("Flight service unavailable");
+		FlightResponse flight = flightClient.getFlight(flightId);
+		if (flight == null)
+			throw new RuntimeException("Flight service unavailable");
 
-	    for (String s : req.getSelectedSeats()) {
-	        SeatResponse seat = flight.getSeats()
-	                .stream()
-	                .filter(x -> x.getSeatNumber().equals(s))
-	                .findFirst()
-	                .orElse(null);
+		for (String seatNum : req.getSelectedSeats()) {
+			SeatResponse seat = flight.getSeats().stream().filter(s -> s.getSeatNumber().equals(seatNum)).findFirst()
+					.orElse(null);
 
-	        if (seat == null) throw new RuntimeException("Seat not found: " + s);
-	        if (seat.isBooked()) throw new RuntimeException("Seat already booked: " + s);
-	    }
+			if (seat == null)
+				throw new RuntimeException("Seat not found: " + seatNum);
+			if (seat.isBooked())
+				throw new RuntimeException("Seat already booked: " + seatNum);
+		}
 
-	    String update = flightClient.bookSeats(flightId, req.getSelectedSeats());
-	    if (!"BOOKING_SUCCESS".equals(update)) throw new RuntimeException(update);
+		String update = flightClient.bookSeats(flightId, req.getSelectedSeats());
+		if (!"BOOKING_SUCCESS".equals(update)) {
+			throw new RuntimeException(update);
+		}
 
-	    Booking b = new Booking();
-	    b.setEmail(req.getEmail());
-	    b.setSeats(req.getSelectedSeats().size());
-	    b.setPassengerDetails(req.getPassengerDetails());
-	    b.setAmount(req.getAmount());
-	    b.setJourneyDate(req.getJourneyDate());
-	    b.setPnr("PNR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-	    b.setFlightId(flightId);
-	    b.setBookedAt(LocalDateTime.now());
-	    b.setStatus("BOOKED");
+		Booking b = new Booking();
+		b.setEmail(req.getEmail());
+		b.setSeats(req.getSelectedSeats().size());
+		b.setPassengerDetails(req.getPassengerDetails());
+		b.setAmount(req.getAmount());
+		b.setJourneyDate(req.getJourneyDate());
+		b.setPnr("PNR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+		b.setFlightId(flightId);
+		b.setBookedAt(LocalDateTime.now());
+		b.setStatus("BOOKED");
 
-	    return repo.save(b);
+		return repo.save(b);
 	}
-
 
 	@Override
 	public List<Booking> getHistory(String email) {

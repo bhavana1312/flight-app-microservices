@@ -1,10 +1,11 @@
-package com.flightapp.bookingservice.dto;
+package com.flightapp.flightservice.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class SeatResponse {
     private Long id;
     private String seatNumber;

@@ -4,7 +4,9 @@ import com.flightapp.flightservice.domain.Flight;
 import com.flightapp.flightservice.domain.Seat;
 import com.flightapp.flightservice.domain.SeatType;
 import com.flightapp.flightservice.dto.FlightInventoryRequest;
+import com.flightapp.flightservice.dto.FlightResponse;
 import com.flightapp.flightservice.dto.FlightSearchRequest;
+import com.flightapp.flightservice.dto.SeatResponse;
 import com.flightapp.flightservice.service.FlightService;
 
 import jakarta.validation.Valid;
@@ -72,12 +74,38 @@ public class FlightController {
 
 	@GetMapping("/get/{id}")
 	public ResponseEntity<?> getFlight(@PathVariable Long id) {
-		Flight flight = service.getFlight(id);
-		if (flight == null) {
-			return ResponseEntity.notFound().build();
-		}
-		return ResponseEntity.ok(flight);
+	    Flight flight = service.getFlight(id);
+	    if (flight == null) {
+	        return ResponseEntity.notFound().build();
+	    }
+	    return ResponseEntity.ok(convertToDto(flight));
 	}
+
+	private FlightResponse convertToDto(Flight f) {
+	    List<SeatResponse> seats = f.getSeats().stream()
+	            .map(s -> new SeatResponse(
+	                    s.getId(),
+	                    s.getSeatNumber(),
+	                    s.getSeatType().name(),
+	                    s.isBooked()
+	            ))
+	            .toList();
+
+	    FlightResponse dto = new FlightResponse();
+	    dto.setId(f.getId());
+	    dto.setAirlineName(f.getAirlineName());
+	    dto.setAirlineCode(f.getAirlineCode());
+	    dto.setFromPlace(f.getFromPlace());
+	    dto.setToPlace(f.getToPlace());
+	    dto.setDepartureDateTime(f.getDepartureDateTime().toString());
+	    dto.setArrivalDateTime(f.getArrivalDateTime().toString());
+	    dto.setPrice(f.getPrice());
+	    dto.setTotalSeats(f.getTotalSeats());
+	    dto.setSeats(seats);
+
+	    return dto;
+	}
+
 
 	@PutMapping("/update-seats/{flightId}/{count}")
 	public ResponseEntity<?> updateSeats(@PathVariable Long flightId, @PathVariable Integer count) {
