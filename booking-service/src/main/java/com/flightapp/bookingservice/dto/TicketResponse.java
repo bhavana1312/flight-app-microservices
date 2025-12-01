@@ -7,11 +7,11 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TicketResponse {
-    private String pnr;
-    private String email;
-    private String passengerDetails;
-    private Integer seats;
-    private Long flightId;
-    private Object flightDetails;
-    private String ticketJson;
+	private String pnr;
+	private String email;
+	private String passengerDetails;
+	private Integer seats;
+	private Long flightId;
+	private Object flightDetails;
+	private String ticketJson;
 }
