@@ -34,8 +34,12 @@ public class FlightController {
 		flight.setArrivalDateTime(req.getArrivalDateTime());
 		flight.setPrice(req.getPrice());
 		flight.setAvailableSeats(req.getAvailableSeats());
+		
+		Flight saved = service.addInventory(flight);
 
-		return ResponseEntity.ok(service.addInventory(flight));
+		return ResponseEntity
+	            .status(201)
+	            .body(saved.getId());
 	}
 
 	@PostMapping("/search")

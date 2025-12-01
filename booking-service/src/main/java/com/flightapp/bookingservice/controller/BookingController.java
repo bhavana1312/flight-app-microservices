@@ -16,51 +16,53 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/flight/booking")
 public class BookingController {
 
-    private final BookingService service;
+	private final BookingService service;
 
-    public BookingController(BookingService service) {
-        this.service = service;
-    }
+	public BookingController(BookingService service) {
+		this.service = service;
+	}
 
-    @PostMapping("/{flightId}")
-    public ResponseEntity<?> book(@PathVariable Long flightId, @Valid @RequestBody BookingRequest req) {
-        try {
-            return ResponseEntity.ok(service.bookTicket(flightId, req));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+	@PostMapping("/{flightId}")
+	public ResponseEntity<?> book(@PathVariable Long flightId, @Valid @RequestBody BookingRequest req) {
+		try {
+			Booking booking = service.bookTicket(flightId, req);
+			return ResponseEntity.status(201).body(booking.getPnr());
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
 
-    @GetMapping("/history/{email}")
-    public ResponseEntity<List<Booking>> history(@PathVariable String email) {
-        return ResponseEntity.ok(service.getHistory(email));
-    }
+	@GetMapping("/history/{email}")
+	public ResponseEntity<List<Booking>> history(@PathVariable String email) {
+		return ResponseEntity.ok(service.getHistory(email));
+	}
 
-    @GetMapping("/ticket/{pnr}")
-    public ResponseEntity<?> getTicket(@PathVariable String pnr) {
-        try {
-            return ResponseEntity.ok(service.getTicketJson(pnr));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+	@GetMapping("/ticket/{pnr}")
+	public ResponseEntity<?> getTicket(@PathVariable String pnr) {
+		try {
+			return ResponseEntity.ok(service.getTicketJson(pnr));
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
 
-    @DeleteMapping("/cancel/{pnr}")
-    public ResponseEntity<?> cancel(@PathVariable String pnr) {
-        try {
-            return ResponseEntity.ok(service.cancelBooking(pnr));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+	@DeleteMapping("/cancel/{pnr}")
+	public ResponseEntity<?> cancel(@PathVariable String pnr) {
+		try {
+	        service.cancelBooking(pnr);
+	        return ResponseEntity.noContent().build(); 
+	    } catch (Exception e) {
+	        return ResponseEntity.badRequest().body(e.getMessage());
+	    }
+	}
 
-    @GetMapping("/download/{pnr}")
-    public ResponseEntity<?> download(@PathVariable String pnr) {
-        try {
-            TicketResponse resp = service.downloadTicket(pnr);
-            return ResponseEntity.ok(resp);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+	@GetMapping("/download/{pnr}")
+	public ResponseEntity<?> download(@PathVariable String pnr) {
+		try {
+			TicketResponse resp = service.downloadTicket(pnr);
+			return ResponseEntity.ok(resp);
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
 }
