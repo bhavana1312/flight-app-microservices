@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ROOT PARENT FOR ALL MICROSERVICES -->
+    <groupId>com.flightapp</groupId>
+    <artifactId>flight-microservices</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>flight-microservices</name>
+    <description>Flight App Microservices - Parent Build</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <spring.boot.version>3.3.5</spring.boot.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
+
+        <!-- SonarCloud -->
+        <sonar.organization>bhavana1312</sonar.organization>
+    </properties>
+
+    <!-- SPRING BOOT PARENT -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>${spring.boot.version}</version>
+        <relativePath/>
+    </parent>
+
+    <!-- LIST ALL YOUR SERVICES HERE -->
+    <modules>
+        <module>api-gateway</module>
+        <module>booking-service</module>
+        <module>config-server</module>
+        <module>flight-service</module>
+        <module>notification-service</module>
+        <module>service-registry</module>
+    </modules>
+
+    <!-- Spring Cloud BOM -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+
+            <!-- Compiler -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <release>${java.version}</release>
+                </configuration>
+            </plugin>
+
+            <!-- JaCoCo for coverage -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.11</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- SonarCloud Plugin -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.11.0.3922</version>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>
