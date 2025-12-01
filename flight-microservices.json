@@ -1,0 +1,155 @@
+{
+  "info": {
+    "_postman_id": "65dee5f8-0e08-4dfa-804e-22b6fbeb6f07",
+    "name": "flight-microservices",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "41278387"
+  },
+  "item": [
+    {
+      "name": "add inventory",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"airlineName\": \"Air India\",\r\n  \"airlineCode\": \"AI\",\r\n  \"fromPlace\": \"DEL\",\r\n  \"toPlace\": \"BLR\",\r\n  \"departureDateTime\": \"2025-12-13T05:30\",\r\n  \"arrivalDateTime\": \"2025-12-13T07:00\",\r\n  \"price\": 3500,\r\n  \"availableSeats\": 120\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/FLIGHT-SERVICE/api/flight/airline/inventory/add",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": [
+            "FLIGHT-SERVICE",
+            "api",
+            "flight",
+            "airline",
+            "inventory",
+            "add"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "search flight",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"from\":\"DEL\",\r\n    \"to\":\"BLR\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/FLIGHT-SERVICE/api/flight/search",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["FLIGHT-SERVICE", "api", "flight", "search"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "book ticket",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"email\": \"bhavana@gmail.com\",\r\n  \"seats\": 2,\r\n  \"passengerDetails\": \"Bhavana:F:24;Siddharth:M:25\",\r\n  \"amount\": 7000.0,\r\n  \"journeyDate\": \"2025-12-13\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/BOOKING-SERVICE/api/flight/booking/2",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["BOOKING-SERVICE", "api", "flight", "booking", "1"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get history",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/BOOKING-SERVICE/api/flight/booking/history/bhavana@gmail.com",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": [
+            "BOOKING-SERVICE",
+            "api",
+            "flight",
+            "booking",
+            "history",
+            "bhavana@gmail.com"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "get ticket",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/BOOKING-SERVICE/api/flight/booking/ticket/PNR-1084A883",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": [
+            "BOOKING-SERVICE",
+            "api",
+            "flight",
+            "booking",
+            "ticket",
+            "PNR-1084A883"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "cancel ticket",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/BOOKING-SERVICE/api/flight/booking/cancel/PNR-1084A883",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": [
+            "BOOKING-SERVICE",
+            "api",
+            "flight",
+            "booking",
+            "cancel",
+            "PNR-1084A883"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

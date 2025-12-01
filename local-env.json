@@ -1,0 +1,16 @@
+{
+  "id": "local-env",
+  "name": "Local Environment",
+  "values": [
+    {
+      "key": "booking_base_url",
+      "value": "http://localhost:9002",
+      "enabled": true
+    },
+    {
+      "key": "flight_base_url",
+      "value": "http://localhost:9001",
+      "enabled": true
+    }
+  ]
+}
