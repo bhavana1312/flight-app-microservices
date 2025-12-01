@@ -11,20 +11,19 @@ import java.util.*;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleValidationErrors(MethodArgumentNotValidException ex) {
+	@ExceptionHandler(MethodArgumentNotValidException.class)
+	public ResponseEntity<Map<String, String>> handleValidationErrors(MethodArgumentNotValidException ex) {
 
-        Map<String, String> errors = new HashMap<>();
+		Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-            errors.put(error.getField(), error.getDefaultMessage())
-        );
+		ex.getBindingResult().getFieldErrors()
+				.forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
-    }
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+	}
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<?> handleRuntimeErrors(RuntimeException ex) {
-        return ResponseEntity.badRequest().body(ex.getMessage());
-    }
+	@ExceptionHandler(RuntimeException.class)
+	public ResponseEntity<String> handleRuntimeErrors(RuntimeException ex) {
+		return ResponseEntity.badRequest().body(ex.getMessage());
+	}
 }

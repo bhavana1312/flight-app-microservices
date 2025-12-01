@@ -23,7 +23,7 @@ public class BookingController {
 	}
 
 	@PostMapping("/{flightId}")
-	public ResponseEntity<?> book(@PathVariable Long flightId, @Valid @RequestBody BookingRequest req) {
+	public ResponseEntity<String> book(@PathVariable Long flightId, @Valid @RequestBody BookingRequest req) {
 		try {
 			Booking booking = service.bookTicket(flightId, req);
 			return ResponseEntity.status(201).body(booking.getPnr());
@@ -38,31 +38,32 @@ public class BookingController {
 	}
 
 	@GetMapping("/ticket/{pnr}")
-	public ResponseEntity<?> getTicket(@PathVariable String pnr) {
+	public ResponseEntity<String> getTicket(@PathVariable String pnr) {
 		try {
-			return ResponseEntity.ok(service.getTicketJson(pnr));
+			String ticketJson = service.getTicketJson(pnr);
+			return ResponseEntity.ok(ticketJson);
 		} catch (Exception e) {
 			return ResponseEntity.badRequest().body(e.getMessage());
 		}
 	}
 
 	@DeleteMapping("/cancel/{pnr}")
-	public ResponseEntity<?> cancel(@PathVariable String pnr) {
+	public ResponseEntity<Void> cancel(@PathVariable String pnr) {
 		try {
-	        service.cancelBooking(pnr);
-	        return ResponseEntity.noContent().build(); 
-	    } catch (Exception e) {
-	        return ResponseEntity.badRequest().body(e.getMessage());
-	    }
+			service.cancelBooking(pnr);
+			return ResponseEntity.noContent().build();
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().build();
+		}
 	}
 
 	@GetMapping("/download/{pnr}")
-	public ResponseEntity<?> download(@PathVariable String pnr) {
+	public ResponseEntity<TicketResponse> download(@PathVariable String pnr) {
 		try {
 			TicketResponse resp = service.downloadTicket(pnr);
 			return ResponseEntity.ok(resp);
 		} catch (Exception e) {
-			return ResponseEntity.badRequest().body(e.getMessage());
+			return ResponseEntity.badRequest().build();
 		}
 	}
 }

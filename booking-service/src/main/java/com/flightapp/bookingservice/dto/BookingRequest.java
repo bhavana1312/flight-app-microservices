@@ -21,7 +21,7 @@ public class BookingRequest {
 	private Integer seats;
 
 	@NotBlank(message = "Passenger details are required")
-	@Pattern(regexp = "([A-Za-z ]+:(M|F):[0-9]{1,3})(;[A-Za-z ]+:(M|F):[0-9]{1,3})*", message = "Passenger details must follow NAME:GENDER:AGE format, separated by semicolons")
+	@Pattern(regexp = "([A-Za-z ]+:[MF]:\\d{1,3})(;[A-Za-z ]+:[MF]:\\d{1,3})*", message = "Passenger details must follow NAME:GENDER:AGE format, separated by semicolons")
 	private String passengerDetails;
 
 	@NotNull(message = "Amount is required")

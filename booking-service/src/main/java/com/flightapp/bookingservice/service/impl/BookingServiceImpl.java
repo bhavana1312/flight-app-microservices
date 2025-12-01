@@ -1,27 +1,29 @@
 package com.flightapp.bookingservice.service.impl;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 
 import com.flightapp.bookingservice.domain.Booking;
 import com.flightapp.bookingservice.dto.BookingRequest;
-import com.flightapp.bookingservice.dto.FlightResponse;
-import com.flightapp.bookingservice.dto.SeatResponse;
 import com.flightapp.bookingservice.dto.TicketResponse;
+import com.flightapp.bookingservice.exception.BookingException;
 import com.flightapp.bookingservice.feign.FlightClient;
 import com.flightapp.bookingservice.repository.BookingRepository;
 import com.flightapp.bookingservice.service.BookingService;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+
 @Service
 public class BookingServiceImpl implements BookingService {
+
+	private static final Logger log = LoggerFactory.getLogger(BookingServiceImpl.class);
 
 	private final BookingRepository repo;
 	private final FlightClient flightClient;
@@ -48,15 +50,18 @@ public class BookingServiceImpl implements BookingService {
 		return flightClient.rollbackSeats(flightId, seats);
 	}
 
-	public Object flightFallback(Long flightId, Throwable t) {
+	public Object flightFallback(Long id, Throwable t) {
+		log.error("Flight service unavailable for flightId={}, error={}", id, t.getMessage());
 		return null;
 	}
 
-	public String seatUpdateFallback(Long flightId, Integer seats, Throwable t) {
+	public String seatUpdateFallback(Long id, Integer seatCount, Throwable t) {
+		log.error("Seat update failed for flightId={}, seats={}, error={}", id, seatCount, t.getMessage());
 		return "Flight Service Down - Cannot Update Seats";
 	}
 
-	public String rollbackFallback(Long flightId, Integer seats, Throwable t) {
+	public String rollbackFallback(Long id, Integer seatCount, Throwable t) {
+		log.error("Rollback failed for flightId={}, seats={}, error={}", id, seatCount, t.getMessage());
 		return "Flight Service Down - Rollback Pending";
 	}
 
@@ -65,24 +70,24 @@ public class BookingServiceImpl implements BookingService {
 
 		String[] passengers = req.getPassengerDetails().split(";");
 		if (passengers.length != req.getSeats()) {
-			throw new RuntimeException("Number of passengers must match number of seats booked");
+			throw new BookingException("Number of passengers must match number of seats booked");
 		}
 
 		for (String p : passengers) {
 			String[] parts = p.split(":");
 			int age = Integer.parseInt(parts[2]);
 			if (age <= 0 || age > 120) {
-				throw new RuntimeException("Invalid age for passenger: " + p);
+				throw new BookingException("Invalid age: " + p);
 			}
 		}
 
 		Object flight = safeGetFlight(flightId);
 		if (flight == null)
-			throw new RuntimeException("Flight service unavailable. Try later.");
+			throw new BookingException("Flight service unavailable. Try later.");
 
-		String seatUpdateStatus = safeUpdateSeats(flightId, req.getSeats());
-		if (!"Seats Updated".equals(seatUpdateStatus))
-			throw new RuntimeException(seatUpdateStatus);
+		String seatUpdate = safeUpdateSeats(flightId, req.getSeats());
+		if (!"Seats Updated".equals(seatUpdate))
+			throw new BookingException(seatUpdate);
 
 		Booking booking = new Booking();
 		booking.setEmail(req.getEmail());
@@ -97,7 +102,7 @@ public class BookingServiceImpl implements BookingService {
 
 		String ticketJson = String.format(
 				"{\"pnr\":\"%s\",\"flightId\":%d,\"journeyDate\":\"%s\",\"passengers\":\"%s\"}", booking.getPnr(),
-				flightId, req.getJourneyDate().toString(), req.getPassengerDetails());
+				flightId, req.getJourneyDate(), req.getPassengerDetails());
 
 		booking.setTicketJson(ticketJson);
 
@@ -113,38 +118,32 @@ public class BookingServiceImpl implements BookingService {
 	public String getTicketJson(String pnr) {
 		Booking b = repo.findByPnr(pnr);
 		if (b == null)
-			throw new RuntimeException("PNR not found");
+			throw new BookingException("PNR not found");
 		return b.getTicketJson();
 	}
 
 	@Override
 	public String cancelBooking(String pnr) {
+
 		Booking b = repo.findByPnr(pnr);
-		if (b == null) {
-			throw new RuntimeException("PNR Not Found");
-		}
+		if (b == null)
+			throw new BookingException("PNR not found");
 
-		if (!b.getStatus().equals("BOOKED")) {
-			throw new RuntimeException("Only booked tickets can be cancelled");
-		}
+		if (!b.getStatus().equals("BOOKED"))
+			throw new BookingException("Only booked tickets can be cancelled");
 
-		if (b.getJourneyDate() == null) {
-			throw new RuntimeException("Journey date not set");
-		}
+		if (b.getJourneyDate() == null)
+			throw new BookingException("Journey date missing");
 
-		LocalDateTime now = LocalDateTime.now();
-		LocalDate journey = b.getJourneyDate();
-		long hoursUntilJourney = Duration.between(now, journey.atStartOfDay()).toHours();
-
-		if (hoursUntilJourney < 24) {
-			throw new RuntimeException("Cancellation allowed only 24 hours before journey");
-		}
+		long hours = Duration.between(LocalDateTime.now(), b.getJourneyDate().atStartOfDay()).toHours();
+		if (hours < 24)
+			throw new BookingException("Cancellation allowed only 24 hours before journey");
 
 		b.setStatus("CANCELLED");
 		repo.save(b);
 
-		String rollbackResponse = safeRollbackSeats(b.getFlightId(), b.getSeats());
-		System.out.println("Rollback response: " + rollbackResponse);
+		String rollback = safeRollbackSeats(b.getFlightId(), b.getSeats());
+		log.info("Rollback response for pnr {}: {}", pnr, rollback);
 
 		return "Cancelled: " + pnr;
 	}
@@ -154,9 +153,9 @@ public class BookingServiceImpl implements BookingService {
 
 		Booking b = repo.findByPnr(pnr);
 		if (b == null)
-			throw new RuntimeException("PNR not found");
+			throw new BookingException("PNR not found");
 
-		Object flightDetails = safeGetFlight(b.getFlightId());
+		Object flight = safeGetFlight(b.getFlightId());
 
 		TicketResponse resp = new TicketResponse();
 		resp.setPnr(b.getPnr());
@@ -164,7 +163,7 @@ public class BookingServiceImpl implements BookingService {
 		resp.setPassengerDetails(b.getPassengerDetails());
 		resp.setSeats(b.getSeats());
 		resp.setFlightId(b.getFlightId());
-		resp.setFlightDetails(flightDetails);
+		resp.setFlightDetails(flight);
 		resp.setTicketJson(b.getTicketJson());
 
 		return resp;
