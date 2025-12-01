@@ -1,17 +1,17 @@
-# ✈️ FlightApp Microservices
+#  FlightApp Microservices
 
 A fully functional **Flight Booking System** built using a **microservices architecture**.  
 This project demonstrates clean separation of services, inter-service communication, fault tolerance, centralized configuration, service discovery, and unified API routing.
 
 ---
 
-## 🖥️ System Architecture
+##  System Architecture
 
 ![System Architecture](system-architecture.png)
 
 ---
 
-## 🚀 Tech Stack
+##  Tech Stack
 
 ### **Backend**
 - Spring Boot 3  
@@ -33,7 +33,7 @@ This project demonstrates clean separation of services, inter-service communicat
 
 ---
 
-## 🎯 Project Goal
+##  Project Goal
 
 Build a scalable microservices-based platform to:
 
@@ -47,16 +47,16 @@ Build a scalable microservices-based platform to:
 
 ---
 
-## 🧩 Microservices Overview
+##  Microservices Overview
 
-### **1️⃣ Flight Service**
+### **1️ Flight Service**
 - Add new flights  
 - Update seat availability  
 - Rollback seats  
 - Get flight details  
 - Connected to **MySQL**
 
-### **2️⃣ Booking Service**
+### **2️ Booking Service**
 - Book a ticket  
 - Cancel booking  
 - Validates age, seats, passengers  
@@ -64,19 +64,19 @@ Build a scalable microservices-based platform to:
 - Publishes events to RabbitMQ  
 - Uses **Resilience4j** for retry/fallback
 
-### **3️⃣ Config Server**
+### **3️ Config Server**
 - Centralized configuration for all services  
 - Loads from GitHub or local repo
 
-### **4️⃣ Eureka Server**
+### **4️ Eureka Server**
 - Service registry  
 - Dynamic service discovery  
 
-### **5️⃣ API Gateway**
+### **5️ API Gateway**
 - Single entrypoint  
 - Dynamic routing using Eureka  
 
-### **6️⃣ Notification Service**
+### **6️ Notification Service**
 - RabbitMQ **consumer**  
 - Sends booking confirmation messages  
 
