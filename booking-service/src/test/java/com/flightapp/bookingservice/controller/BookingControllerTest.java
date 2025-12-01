@@ -1,91 +1,97 @@
 package com.flightapp.bookingservice.controller;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.time.LocalDate;
-
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.http.ResponseEntity;
-
 import com.flightapp.bookingservice.domain.Booking;
 import com.flightapp.bookingservice.dto.BookingRequest;
 import com.flightapp.bookingservice.dto.TicketResponse;
 import com.flightapp.bookingservice.service.BookingService;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
 class BookingControllerTest {
 
 	@Mock
-	private BookingService service;
+	BookingService service;
 
 	@InjectMocks
-	private BookingController controller;
-
-	BookingControllerTest() {
-		MockitoAnnotations.openMocks(this);
-	}
+	BookingController controller;
 
 	@Test
 	void testBookSuccess() {
+		BookingRequest req = new BookingRequest("a@gmail.com", 1, "John:M:20", 100.0, LocalDate.now().plusDays(1));
 		Booking booking = new Booking();
-		booking.setPnr("PNR123");
-		when(service.bookTicket(anyLong(), any())).thenReturn(booking);
-
-		BookingRequest req = new BookingRequest("a@b.com", 1, "John:M:30", 1000.0, LocalDate.now().plusDays(2));
-
+		booking.setPnr("PNR1");
+		when(service.bookTicket(1L, req)).thenReturn(booking);
 		ResponseEntity<String> resp = controller.book(1L, req);
-
 		assertEquals(201, resp.getStatusCode().value());
-		assertEquals("PNR123", resp.getBody());
+		assertEquals("PNR1", resp.getBody());
 	}
 
 	@Test
 	void testBookFailure() {
-		when(service.bookTicket(anyLong(), any())).thenThrow(new RuntimeException("Error"));
-
-		BookingRequest req = new BookingRequest("a@b.com", 1, "John:M:30", 1000.0, LocalDate.now().plusDays(2));
-
+		BookingRequest req = new BookingRequest("a@gmail.com", 1, "John:M:20", 100.0, LocalDate.now().plusDays(1));
+		when(service.bookTicket(1L, req)).thenThrow(new RuntimeException("err"));
 		ResponseEntity<String> resp = controller.book(1L, req);
-
 		assertEquals(400, resp.getStatusCode().value());
+		assertEquals("err", resp.getBody());
 	}
 
 	@Test
 	void testHistory() {
-		controller.history("a@b.com");
-		verify(service).getHistory("a@b.com");
+		when(service.getHistory("a@gmail.com")).thenReturn(List.of(new Booking()));
+		ResponseEntity<List<Booking>> resp = controller.history("a@gmail.com");
+		assertEquals(1, resp.getBody().size());
 	}
 
 	@Test
 	void testGetTicketSuccess() {
-		when(service.getTicketJson("P")).thenReturn("{}");
-
-		ResponseEntity<String> resp = controller.getTicket("P");
-
-		assertEquals("{}", resp.getBody());
+		when(service.getTicketJson("PNR1")).thenReturn("json");
+		ResponseEntity<String> resp = controller.getTicket("PNR1");
+		assertEquals("json", resp.getBody());
 	}
 
 	@Test
-	void testCancel() {
-		ResponseEntity<Void> resp = controller.cancel("P");
+	void testGetTicketFailure() {
+		when(service.getTicketJson("PNR1")).thenThrow(new RuntimeException("not found"));
+		ResponseEntity<String> resp = controller.getTicket("PNR1");
+		assertEquals(400, resp.getStatusCode().value());
+		assertEquals("not found", resp.getBody());
+	}
+
+	@Test
+	void testCancelSuccess() {
+		ResponseEntity<Void> resp = controller.cancel("PNR1");
 		assertEquals(204, resp.getStatusCode().value());
 	}
 
 	@Test
+	void testCancelFailure() {
+		doThrow(new RuntimeException()).when(service).cancelBooking("PNR1");
+		ResponseEntity<Void> resp = controller.cancel("PNR1");
+		assertEquals(400, resp.getStatusCode().value());
+	}
+
+	@Test
 	void testDownloadSuccess() {
-		TicketResponse tr = new TicketResponse();
-		tr.setPnr("X");
+		TicketResponse t = new TicketResponse("P", "e", "d", 1, 1L, new Object(), "j");
+		when(service.downloadTicket("P")).thenReturn(t);
+		ResponseEntity<TicketResponse> resp = controller.download("P");
+		assertEquals("P", resp.getBody().getPnr());
+	}
 
-		when(service.downloadTicket("X")).thenReturn(tr);
-
-		ResponseEntity<TicketResponse> resp = controller.download("X");
-
-		assertEquals("X", resp.getBody().getPnr());
+	@Test
+	void testDownloadFailure() {
+		when(service.downloadTicket("P")).thenThrow(new RuntimeException());
+		ResponseEntity<TicketResponse> resp = controller.download("P");
+		assertEquals(400, resp.getStatusCode().value());
 	}
 }
