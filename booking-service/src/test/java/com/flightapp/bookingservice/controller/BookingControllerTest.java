@@ -1,18 +1,23 @@
 package com.flightapp.bookingservice.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDate;
+
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.ResponseEntity;
+
 import com.flightapp.bookingservice.domain.Booking;
 import com.flightapp.bookingservice.dto.BookingRequest;
 import com.flightapp.bookingservice.dto.TicketResponse;
 import com.flightapp.bookingservice.service.BookingService;
-
-import org.junit.jupiter.api.Test;
-import org.mockito.*;
-import org.springframework.http.ResponseEntity;
-
-import java.time.LocalDate;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 class BookingControllerTest {
 
@@ -36,7 +41,7 @@ class BookingControllerTest {
 
 		ResponseEntity<String> resp = controller.book(1L, req);
 
-		assertEquals(201, resp.getStatusCodeValue());
+		assertEquals(201, resp.getStatusCode().value());
 		assertEquals("PNR123", resp.getBody());
 	}
 
@@ -48,7 +53,7 @@ class BookingControllerTest {
 
 		ResponseEntity<String> resp = controller.book(1L, req);
 
-		assertEquals(400, resp.getStatusCodeValue());
+		assertEquals(400, resp.getStatusCode().value());
 	}
 
 	@Test
@@ -69,7 +74,7 @@ class BookingControllerTest {
 	@Test
 	void testCancel() {
 		ResponseEntity<Void> resp = controller.cancel("P");
-		assertEquals(204, resp.getStatusCodeValue());
+		assertEquals(204, resp.getStatusCode().value());
 	}
 
 	@Test
